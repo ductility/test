@@ -23,24 +23,21 @@ h1 {
     <script src="webOSjs-0.1.0/webOS.js" charset="utf-8"></script>
     <script type="text/javascript">
         //sample code for calling LS2 API
+        var time_now = null;
         function luna_getTime() {
-            var time_now = null;
             var lunaReq= webOS.service.request("luna://com.webos.service.systemservice",
         {
             method:"clock/getTime",
             parameters:{},
             onSuccess: function (args) {
                 time_now = args.utc;//유닉스 시간으로 반환됨.
-                console.log(args);
-                console.log(args.utc);
-
                 webOS.info("GETTIME_SUCCESS", {"APP_NAME": "example web app"}, "UTC : " + args.utc);
             },
             onFailure: function (args) {
                 webOS.error("GETTIME_FAILED", {"APP_NAME": "example web app"}, "errorText : " + args.errorText);
             }
         });
-        return time_now;//유닉스 시간 반환
+        return time_now;
         }
         
         
@@ -106,12 +103,12 @@ h1 {
         }
         var laundrytime = 3600;            //end_time-cul-time; //reservation_data[0].duration 을 숫자로 변환해서 반환하기.  아래는 타이머 관련
                 laundrytime = laundrytime* 1000;
-                var countDownDate = new Date().getTime()+laundrytime;
+                var countDownDate = luna_getTime()*1000+laundrytime+20*60*1000;
                 // Update the count down every 1 second
                 var x = setInterval(function() {
                 
                     // Get today's date and time
-                    var now = new Date().getTime();
+                    var now = luna_getTime()*1000;
                 
                     // Find the distance between now and the count down date
                     var distance = countDownDate - now;
