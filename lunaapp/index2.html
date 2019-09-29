@@ -106,17 +106,17 @@ body {
                     var now = t*1000;
                     var distance = end_time - now;
                     console.log(distance)
-                    if(start_time>now) {
+                    if(start_time>now) { //예약은 되어있으나 세탁기 시작시간이 아직 남아있을 때
                         var start_t = getTimestampToDate(start_time/1000);
                         document.getElementById("timer").innerHTML = start_t;
-                    } else {
+                    } else {    //세탁기가 동작 중일 때
                         var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                         var seconds = Math.floor((distance % (1000 * 60)) / 1000);
                         document.getElementById("timer").innerHTML =  hours + "h "
                         + minutes + "m " + seconds + "s ";
                     
-                        if (distance < 0) {
+                        if (distance < 0) { //세탁이 종료되면 빨래완료를 view
                             clearInterval(x);
                             document.getElementById("timer").innerHTML = "빨래완료";
                         }
@@ -124,7 +124,7 @@ body {
                 });
             }, 1000);
     }
-    else{document.getElementById("timer").innerHTML = "예약이 없습니다.";}
+    else{document.getElementById("timer").innerHTML = "예약이 없습니다.";}  //빨래 예약 data가 없을을 view
     });
 
 
