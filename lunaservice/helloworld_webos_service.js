@@ -1,32 +1,19 @@
-// helloworld_webos_service.js
-// is simple service, based on low-level luna-bus API
-
 var pkgInfo = require('./package.json');
 var Service = require('webos-service');
-var pmloglib = require('pmloglib'); // For use pmlog, pmlog is wirted /var/log/messages
+var pmloglib = require('pmloglib');
 var http = require('http');
-// var request = require('request');
 
 var service = new Service(pkgInfo.name); // Create service by service name on package.json
 var context = new pmloglib.Context("helloService"); // Create context of pmlog
 var greeting = "Hello, World!";
 var userMcode = "1234";
-// a method that always returns the same value
-service.register("hello", function(message) {
-    context.log(pmloglib.LOG_INFO, "SERVICE_METHOD_CALLED",{}, "" + pkgInfo.name + "/hello");
-    console.log("In hello callback");
-    message.respond({
-        returnValue: true,
-        message: greeting
-    });
-});
 
+//userID(Mcode)에 따라 사용자의 빨래 데이터를 가져오는 service 등록
 service.register("getdata", function(message) {
-    
     http.get({
-        hostname: '192.168.1.122',
+        hostname: '192.168.1.122',                  //서버 ip
         port: 8080,
-        path: '/userdata/'+message.payload.userID
+        path: '/userdata/'+message.payload.userID   //서버에서 작성한 MYSQL data를 가져올 경로
     }, function(res) {
         
         var body = '';
@@ -35,7 +22,7 @@ service.register("getdata", function(message) {
         });
 
         res.on('end', function(){
-            var fbResponse = JSON.parse(body);
+            var fbResponse = JSON.parse(body);      //body의 내용(MYSQL data)을 JSON으로 가져오기
 
             message.respond({
                 returnValue: true,
@@ -43,12 +30,8 @@ service.register("getdata", function(message) {
             });
         });
     });
-    
-
-    // request('http://192.168.1.122:8080/userdata/ductility', {json: true}, function(err, res, body) {
-
-    // });
 });
+
 service.register("InsertUser", function(message) {
     console.dir(message);
     userMcode = message.uniqueToken;

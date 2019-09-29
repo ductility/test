@@ -24,189 +24,116 @@ body {
 </style>
     <script src="webOSjs-0.1.0/webOS.js" charset="utf-8"></script>
     <script type="text/javascript">
-        //sample code for calling LS2 API
 
-        function getQueryStringObject(callback) {
-            var a = window.location.search.substr(1).split('&');
-            if (a == "") return {};
-            var b = {};
-            for (var i = 0; i < a.length; ++i) {
-                var p = a[i].split('=', 2);
-                if (p.length == 1)
-                    b[p[0]] = "";
-                else
-                    b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-            }
-            callback();
-            return b;
+    //쿼리 스트링 분석 함수
+    function getQueryStringObject(callback) {
+        var a = window.location.search.substr(1).split('&');
+        if (a == "") return {};
+        var b = {};
+        for (var i = 0; i < a.length; ++i) {
+            var p = a[i].split('=', 2);
+            if (p.length == 1)
+                b[p[0]] = "";
+            else
+                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
         }
+        callback();
+        return b;
+    }
 
-        function getTimestampToDate(timestamp){
-            var date = new Date(timestamp*1000);
-            var chgTimestamp = date.getFullYear().toString()+"년 "
-                +addZero(date.getMonth()+1)+"월 "
-                +addZero(date.getDate().toString())+"일 "
-                +addZero(date.getHours().toString())+"시 "
-                +addZero(date.getMinutes().toString())+"분 "
-                +addZero(date.getSeconds().toString())+"초에 예약되어 있습니다.";
-            return chgTimestamp;
-        }
         
-        function addZero(data){
-            return (data<10) ? "0"+data : data;
+    function getTimestampToDate(timestamp){
+        var date = new Date(timestamp*1000);
+        var chgTimestamp = date.getFullYear().toString()+"년 "
+            +addZero(date.getMonth()+1)+"월 "
+            +addZero(date.getDate().toString())+"일 "
+            +addZero(date.getHours().toString())+"시 "
+            +addZero(date.getMinutes().toString())+"분 "
+            +addZero(date.getSeconds().toString())+"초에 예약되어 있습니다.";
+        return chgTimestamp;
+    }
+    
+    function addZero(data){
+        return (data<10) ? "0"+data : data;
+    }
+    
+    //Luna API로 현재시각 가져오기, callback지정
+    function luna_getTime(callback) {
+        var lunaReq= webOS.service.request("luna://com.webos.service.systemservice",
+    {
+        method:"clock/getTime",
+        parameters:{},
+        onSuccess: function (args) {
+            time_now = args.utc;
+            callback(time_now);
+        },
+        onFailure: function (args) {
+            console.log(args.errorText);
         }
+    });
+    }     
 
-
-      
-        function luna_getTime(callback) {
-            var lunaReq= webOS.service.request("luna://com.webos.service.systemservice",
-        {
-            method:"clock/getTime",
-            parameters:{},
-            onSuccess: function (args) {
-                time_now = args.utc;//유닉스 시간으로 반환됨.
-                callback(time_now);
-                webOS.info("GETTIME_SUCCESS", {"APP_NAME": "example web app"}, "UTC : " + args.utc);
+    //등록한 service에서 빨래예약목록(MYSQL데이터) 가져오기
+    function luna_getReservation(callback) {
+        var Mcode = window.location.search.substring(1).split('=')[1];
+        var lunaResult = webOS.service.request("luna://com.luna.app.service", {
+            method:"getdata",
+            parameters:{userID:Mcode},
+            onSuccess: function (args) {                   
+                if (callback != null) {
+                    callback(args.message);
+                } 
             },
             onFailure: function (args) {
-                webOS.error("GETTIME_FAILED", {"APP_NAME": "example web app"}, "errorText : " + args.errorText);
+                console.log('error', args.errorText);
             }
         });
-        }
-        
-        
-        function test1(callback) {
-            var lunaResult = webOS.service.request("luna://com.luna.app.service", {
-                method:"hello",
-                parameters:{},
-                onSuccess: function (args) {
-                    console.log('success', args);
-                    callback(args);                 
-                },
-                onFailure: function (args) {
-                    console.log('error', args);
-                }
-            });
-        };
+    };
 
-        
-        
+    //빨래 일정 데이터를 가져온 후 처리하기
+    luna_getReservation(function(reservation_data) {
+        if(reservation_data.reservation == 1){  //예약된 빨래 일정 데이터가 있다면
 
-        function test2(callback) {
-            var Mcode = window.location.search.substring(1).split('=')[1];
-            var lunaResult = webOS.service.request("luna://com.luna.app.service", {
-                method:"getdata",
-                parameters:{userID:Mcode},
-                onSuccess: function (args) {                   
-                    if (callback != null) {
-                        callback(args.message);
-                    }
+            var start_time = new Date(reservation_data.start).getTime();//시작시간 가져오기
+            var s = reservation_data.duration;                          //동작시간 가져오기
+            var end_time = (s[0]-'0')*36000 + (s[1]-'0')*3600 +(s[3]-'0')*600 +(s[4]-'0')*60 +(s[6]-'0')*10 +(s[7]-'0') ;
+            end_time = end_time*1000 + start_time;                      //종료시간 = 동작시간 + 시작시간, 스트링 분석을 이용하여 사칙연산이 가능한 형태로 바꿔주었다.
+
+            //초단위 타이머
+            var x = setInterval(function() {
+                //현재 시간을 가져온 후 타이머 연산
+                luna_getTime(function(t) {
+                    var now = t*1000;
+                    var distance = end_time - now;
+                    console.log(distance)
+                    if(start_time>now) {
+                        var start_t = getTimestampToDate(start_time/1000);
+                        document.getElementById("timer").innerHTML = start_t;
+                    } else {
+                        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                        document.getElementById("timer").innerHTML =  hours + "h "
+                        + minutes + "m " + seconds + "s ";
                     
-                },
-                onFailure: function (args) {
-                    console.log('error', args);
-
-                    document.getElementById('log').innerHTML(
-                        "button2" + "error"
-                    );
-                }
-            });
-        };
-        
-        function click1() {
-            test1();
-        }
-        function click2() {
-            test2();
-        }
-
-// var reservation_data = test2(function(reservation_data) {});
-
-        //function 안에서   return 한걸 이용
-        //이걸 처리하는 function만들기 temp[0] = {mcode: "ductility", email: "/ajax?email=jys9704%40gmail.com", state: null, reservation: 1, start: "2019-09-23 09:30:00", …}
-        //var reservation_data = [{mcode: "ductility", email: "/ajax?email=jys9704%40gmail.com", state: null, reservation: 1, start: "2019-09-29 02:53:00", duration: "00:30:00"}]
-        function viewReservation() {
-            console.log(1);
-            var reservation_data = test2(function(reservation_data) {
-                
-                console.log(2)
-                document.getElementById('list').innerHTML = 
-                `${reservation_data.mcode}</br>
-                ${reservation_data.email}</br>
-                ${reservation_data.state}</br>
-                ${reservation_data.reservation}</br>
-                ${reservation_data.start}</br>
-                ${reservation_data.duration}`
-                
-            });
-            
-            // if(reservation_data.length > 0){
-            //     document.getElementById('list').innerHTML = 
-            //     `${reservation_data[0].mcode}</br>
-            //     ${reservation_data[0].email}</br>
-            //     ${reservation_data[0].state}</br>
-            //     ${reservation_data[0].reservation}</br>
-            //     ${reservation_data[0].start}</br>
-            //     ${reservation_data[0].duration}`
-            // }
-        }
-// var reservation_data = test2(function(reservation_data) {
-//         console.log("on");
-//         console.log(reservation_data);
-// });
-
-
-        test2(function(reservation_data) {//t가 현재 시각임.
-            console.log("on");
-            if(reservation_data.reservation == 1){
-
-                var start_time = new Date(reservation_data.start).getTime();//밀리섹단위
-                var s = reservation_data.duration;//초단위
-                var end_time = (s[0]-'0')*36000 + (s[1]-'0')*3600 +(s[3]-'0')*600 +(s[4]-'0')*60 +(s[6]-'0')*10 +(s[7]-'0') ;//초단위
-                end_time = end_time*1000 + start_time;
-
-                var gap_time = 0;   //영국, 한국 시간차이 16시간 빼주기 //reservation_data.duration 을 숫자로 변환해서 반환하기.  아래는 타이머 관련
-                var countDownDate = end_time - gap_time;//밀리섹단위 end_time - 16시간
-                var x = setInterval(function() {
-                    luna_getTime(function(t) {
-                        var now = t*1000;
-                        var distance = countDownDate - now;//밀리섹단위 Find the distance between now and the count down date
-                        console.log(distance)
-                        if(start_time>now) {
-                            var start_t = getTimestampToDate(start_time/1000);
-                            document.getElementById("timer").innerHTML = start_t;
-                        } else {
-                            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                            document.getElementById("timer").innerHTML =  hours + "h "
-                            + minutes + "m " + seconds + "s ";
-                        
-                            // If the count down is over, write some text
-                            if (distance < 0) {
-                                clearInterval(x);
-                                document.getElementById("timer").innerHTML = "빨래완료";
-                                document.getElementById("timer").style.coler = "red";
-                            }
+                        if (distance < 0) {
+                            clearInterval(x);
+                            document.getElementById("timer").innerHTML = "00h 00m 00s ";
+                            document.getElementById("timer").style.coler = "red";
                         }
-                    });
-                }, 1000);
-        }
-        else{document.getElementById("timer").innerHTML = "예약이 없습니다.";}
-        });
+                    }
+                });
+            }, 1000);
+    }
+    else{document.getElementById("timer").innerHTML = "예약이 없습니다.";}
+    });
 
 
-        
-        
-        
     </script>
 </head>
 <body>
-    <button id='btn1' onclick="click1()">Button 1</button>
-    <button id='btn2' onclick="click2()">Button 2</button>
     <div id='table'>
-            <div id='timer'>timer</div>
+            <div id='timer'></div>
     </div>
-    <div id='list' style="color:white";></div>
 </body>
 </html>
