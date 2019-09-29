@@ -1,180 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style type="text/css">
-body {
-    width: 100%;
-    height: 100%;
-    background-color:#202020;
-}
-#table {
-    position:absolute;
-    height:100%;
-    width:100%;
-    display: table;
-}
-/* h1 {
-    display: table-cell;
-    vertical-align: middle;
-    text-align:center;
-    color: #FFFFFF;
-}  */
-#timer{
-    display: table-cell;
-    vertical-align: middle;
-    text-align:center;
-    color: #FFFFFF;
-    font-size: 50px;
-}
-</style>
+    <meta charset="utf-8">
+    <style type="text/css">
+    body {
+        width: 100%;
+        height: 100%;
+        background-color:#202020;
+    }
+    #table {
+        position:absolute;
+        height:100%;
+        width:100%;
+        display: table;
+    }
+    /* h1 {
+        display: table-cell;
+        vertical-align: middle;
+        text-align:center;
+        color: #FFFFFF;
+    }  */
+    #timer{
+        display: table-cell;
+        vertical-align: middle;
+        text-align:center;
+        color: #FFFFFF;
+        font-size: 50px;
+    }
+    </style>
     <script src="webOSjs-0.1.0/webOS.js" charset="utf-8"></script>
-    <script type="text/javascript">
-        //sample code for calling LS2 API
-      
-        function luna_getTime(callback) {
-            var lunaReq= webOS.service.request("luna://com.webos.service.systemservice",
-        {
-            method:"clock/getTime",
-            parameters:{},
-            onSuccess: function (args) {
-                time_now = args.utc;//유닉스 시간으로 반환됨.
-                callback(time_now);
-                webOS.info("GETTIME_SUCCESS", {"APP_NAME": "example web app"}, "UTC : " + args.utc);
-            },
-            onFailure: function (args) {
-                webOS.error("GETTIME_FAILED", {"APP_NAME": "example web app"}, "errorText : " + args.errorText);
-            }
-        });
-        }
-        
-        
-        function test1() {
-            var lunaResult = webOS.service.request("luna://com.luna.app.service", {
-                method:"hello",
-                parameters:{},
-                onSuccess: function (args) {
-                    console.log('success', args);
-
-                    document.getElementById('log').innerHTML = "button1" + "success";
-                    
-                },
-                onFailure: function (args) {
-                    console.log('error', args);
-
-                    document.getElementById('log').innerHTML = "button1" + "error";
-                }
-            });
-        };
-
-        function test2(callback) {
-            var lunaResult = webOS.service.request("luna://com.luna.app.service", {
-                method:"getdata",
-                parameters:{},
-                onSuccess: function (args) {
-                    console.log('success', args);
-
-                    var start_time = args.message[0].start;
-                   
-                    if (callback != null) {
-                        callback(args.message);
-                    }
-                    
-                },
-                onFailure: function (args) {
-                    console.log('error', args);
-
-                    document.getElementById('log').innerHTML(
-                        "button2" + "error"
-                    );
-                }
-            });
-        };
-        
-        function click1() {
-            test1();
-        }
-        function click2() {
-            test2();
-        }
-        //function 안에서   return 한걸 이용
-        //이걸 처리하는 function만들기 temp[0] = {mcode: "ductility", email: "/ajax?email=jys9704%40gmail.com", state: null, reservation: 1, start: "2019-09-23 09:30:00", …}
-        var reservation_data = [{mcode: "ductility", email: "/ajax?email=jys9704%40gmail.com", state: null, reservation: 1, start: "2019-09-27 16:30:00", duration: "00:30:00"}]
-        function viewReservation() {
-            // var reservation_data = test2(function(reservation_data) {
-            //     if(reservation_data.length > 0){
-            //         document.getElementById('list').innerHTML = 
-            //         `${reservation_data[0].mcode}</br>
-            //         ${reservation_data[0].email}</br>
-            //         ${reservation_data[0].state}</br>
-            //         ${reservation_data[0].reservation}</br>
-            //         ${reservation_data[0].start}</br>
-            //         ${reservation_data[0].duration}`
-            //     }
-            // });
-            
-            if(reservation_data.length > 0){
-                document.getElementById('list').innerHTML = 
-                `${reservation_data[0].mcode}</br>
-                ${reservation_data[0].email}</br>
-                ${reservation_data[0].state}</br>
-                ${reservation_data[0].reservation}</br>
-                ${reservation_data[0].start}</br>
-                ${reservation_data[0].duration}`
-            }
-        }
-        
-
-        if(reservation_data.length > 0){
-            start_time = new Date(reservation_data[0].start).getTime();//밀리섹단위
-            var s = reservation_data[0].duration;//초단위
-            var end_time = (s[0]-'0')*36000 + (s[1]-'0')*3600 +(s[3]-'0')*600 +(s[4]-'0')*60 +(s[6]-'0')*10 +(s[7]-'0') ;//초단위
-            end_time = end_time*1000 + start_time;
-        }
-        luna_getTime(function(t) {
-            
-            var gap_time = 16*3600*1000;   //영국, 한국 시간차이 16시간 빼주기 //reservation_data[0].duration 을 숫자로 변환해서 반환하기.  아래는 타이머 관련
-            // laundrytime = laundrytime* 1000;
-            var countDownDate = end_time - gap_time;//밀리섹단위 end_time - 16시간
-
-            // Update the count down every 1 second
-            var x = setInterval(function() {
-                
-                luna_getTime(function(t) {
-                    // Get today's date and time
-                    var now = t*1000;
-                
-                    // Find the distance between now and the count down date
-                    var distance = countDownDate - now;//밀리섹단위
-                    console.log(distance)
-                
-                    // Time calculations for days, hours, minutes and seconds
-                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                
-                    // Output the result in an element with id="demo"
-                    document.getElementById("timer").innerHTML =  hours + "h "
-                    + minutes + "m " + seconds + "s ";
-                
-                    // If the count down is over, write some text
-                    if (distance < 0) {
-                        clearInterval(x);
-                        document.getElementById("timer").innerHTML = "빨래완료";
-                        document.getElementById("timer").style.coler = "red";
-                    }
-                });
-            }, 1000);
-        });
-        
-        
-    </script>
 </head>
-<body>
-    <button id='btn1' onclick="click1()">Button 1</button>
-    <button id='btn2' onclick="click2()">Button 2</button>
-    <div id='table'>
-            <div id='timer'>timer</div>
-    </div>
-    <div id='list' style="color:white";></div>
+<body id = "timer">
+    <form name="loginForm" action="./index2.html"  method="get">
+        <div id='table'>
+            <div id = "userId" >
+                세탁기 코드 : <input type="text" name="userId">
+                <input type="submit" value="확인">
+            </div>
+        </div>
+    </form>    
 </body>
 </html>

@@ -10,7 +10,7 @@ var http = require('http');
 var service = new Service(pkgInfo.name); // Create service by service name on package.json
 var context = new pmloglib.Context("helloService"); // Create context of pmlog
 var greeting = "Hello, World!";
-
+var userMcode = "1234";
 // a method that always returns the same value
 service.register("hello", function(message) {
     context.log(pmloglib.LOG_INFO, "SERVICE_METHOD_CALLED",{}, "" + pkgInfo.name + "/hello");
@@ -26,7 +26,7 @@ service.register("getdata", function(message) {
     http.get({
         hostname: '192.168.1.122',
         port: 8080,
-        path: '/userdata/ductility'
+        path: '/userdata/'+message.payload.userID
     }, function(res) {
         
         var body = '';
@@ -48,6 +48,10 @@ service.register("getdata", function(message) {
     // request('http://192.168.1.122:8080/userdata/ductility', {json: true}, function(err, res, body) {
 
     // });
+});
+service.register("InsertUser", function(message) {
+    console.dir(message);
+    userMcode = message.uniqueToken;
 });
 
 // set some state in the service
