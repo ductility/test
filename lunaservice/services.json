@@ -1,6 +1,6 @@
 {
   "id": "com.luna.app.service",
-  "description": "HelloWorld Service",
+  "description": "laundryapp service",
   "services": [
     {
       "name": "com.luna.app.service"
