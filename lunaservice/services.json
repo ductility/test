@@ -1,9 +1,9 @@
 {
-  "id": "com.luna.app.service",
+  "id": "com.laundry.app.service",
   "description": "laundryapp service",
   "services": [
     {
-      "name": "com.luna.app.service"
+      "name": "com.laundry.app.service"
     }
   ]
 }

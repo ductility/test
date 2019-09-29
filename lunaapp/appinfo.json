@@ -1,10 +1,10 @@
 {
-  "id": "com.luna.app",
-  "version": "1.0.6",
-  "vendor": "My Company",
+  "id": "com.laundry.app",
+  "version": "1.0.0",
+  "vendor": "SIOR",
   "type": "web",
   "main": "index.html",
-  "title": "luna",
+  "title": "laundryapp",
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
   "requiredPermissions": [

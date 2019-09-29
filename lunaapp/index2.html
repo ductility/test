@@ -76,7 +76,7 @@ body {
     //등록한 service에서 빨래예약목록(MYSQL데이터) 가져오기
     function luna_getReservation(callback) {
         var Mcode = window.location.search.substring(1).split('=')[1];
-        var lunaResult = webOS.service.request("luna://com.luna.app.service", {
+        var lunaResult = webOS.service.request("luna://com.laundry.app.service", {
             method:"getdata",
             parameters:{userID:Mcode},
             onSuccess: function (args) {                   
@@ -118,8 +118,7 @@ body {
                     
                         if (distance < 0) {
                             clearInterval(x);
-                            document.getElementById("timer").innerHTML = "00h 00m 00s ";
-                            document.getElementById("timer").style.coler = "red";
+                            document.getElementById("timer").innerHTML = "빨래완료";
                         }
                     }
                 });

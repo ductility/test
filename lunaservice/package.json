@@ -1,5 +1,5 @@
 {
-  "name": "com.luna.app.service",
+  "name": "com.laundry.app.service",
   "version": "1.0.0",
   "description": "laundryapp service",
   "main": "laundry_service.js",
